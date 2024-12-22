@@ -227,40 +227,68 @@
                         </h2>
 
                         <div class="mb-4">
-                            <div class="input-group mb-3 animate__animated animate__fadeInUp animate__delay-1s">
-                                <input type="text"
-                                       class="form-control form-control-lg shadow-sm rounded-pill url-input"
-                                       id="urlInput"
-                                       placeholder="Enter URL to check"
-                                       required>
-                                <button class="btn analyze-btn btn-lg px-4 rounded-pill ms-2"
-                                        onclick="analyzeURL()">
-                                    Analyze URL
-                                </button>
-                            </div>
+                            <form action="/" method="post" class="animate__animated animate__fadeInUp animate__delay-1s">
+                                <div class="input-group mb-3">
+                                    <input type="text"
+                                           name="url"
+                                           class="form-control form-control-lg shadow-sm rounded-pill url-input"
+                                           id="url"
+                                           placeholder="Enter URL to check"
+                                           required>
+                                    <button type="submit" class="btn analyze-btn btn-lg px-4 rounded-pill ms-2">
+                                        Analyze URL
+                                    </button>
+                                </div>
+                            </form>
                         </div>
 
-                        <div id="resultSection" class="text-center result-section">
-                            <div id="score-display" class="score-circle d-none">
-                                <span id="score-text" class="score-text"></span>
+                        {% if xx != -1 %}
+                        <div id="resultSection" class="text-center result-section visible">
+                            <div id="score-display" class="score-circle {% if xx >= 0.50 %}safe-score{% else %}unsafe-score{% endif %}">
+                                <span id="score-text" class="score-text">
+                                    {% if xx >= 0.50 %}
+                                        {{ "%.1f"|format(xx * 100) }}%
+                                    {% else %}
+                                        {{ "%.1f"|format(100 - (xx * 100)) }}%
+                                    {% endif %}
+                                </span>
                             </div>
 
-                            <div id="urlDisplay" class="text-white mb-3"></div>
+                            <div id="urlDisplay" class="text-white mb-3">
+                                <a href="{{ url }}" class="text-white text-decoration-none" target="_blank">
+                                    {{ url }}
+                                </a>
+                            </div>
 
-                            <h3 id="prediction" class="result-text text-white mb-4 animate__animated animate__fadeIn"></h3>
+                            <h3 id="prediction" class="result-text text-white mb-4 animate__animated animate__fadeIn">
+                                {% if xx >= 0.50 %}
+                                    Website is {{ "%.1f"|format(xx * 100) }}% safe to use
+                                {% else %}
+                                    Website is {{ "%.1f"|format(100 - (xx * 100)) }}% unsafe to use
+                                {% endif %}
+                            </h3>
 
                             <div id="categories-list" class="text-start text-white">
+                                {% for category in categories %}
+                                <div class="category-item animate__animated animate__fadeInLeft">
+                                    Name: {{ category.name }}, Confidence: {{ category.confidence }}%
+                                </div>
+                                {% endfor %}
                             </div>
 
                             <div class="mt-4">
-                                <button id="safeButton" class="btn btn-success btn-lg px-4 me-2 d-none animate__animated animate__fadeInUp rounded-pill">
-                                    Continue Safely
-                                </button>
-                                <button id="unsafeButton" class="btn btn-danger btn-lg px-4 d-none animate__animated animate__fadeInUp rounded-pill">
-                                    Proceed with Caution
-                                </button>
+                                {% if xx >= 0.50 %}
+                                    <button onclick="window.open('{{ url }}')" class="btn btn-success btn-lg px-4 me-2 animate__animated animate__fadeInUp rounded-pill">
+                                        Continue Safely
+                                    </button>
+                                {% else %}
+                                    <button onclick="window.open('{{ url }}')" class="btn btn-danger btn-lg px-4 animate__animated animate__fadeInUp rounded-pill">
+                                        Proceed with Caution
+                                    </button>
+                                {% endif %}
                             </div>
                         </div>
+                        {% endif %}
                     </div>
                 </div>
             </div>
@@ -305,100 +333,10 @@
             retina_detect: true
         });
 
-        // Function to animate number counting
-        function animateValue(obj, start, end, duration) {
-            let startTimestamp = null;
-            const step = (timestamp) => {
-                if (!startTimestamp) startTimestamp = timestamp;
-                const progress = Math.min((timestamp - startTimestamp) / duration, 1);
-                const current = Math.floor(progress * (end - start) + start);
-                obj.textContent = current.toFixed(1) + '%';
-                if (progress < 1) {
-                    window.requestAnimationFrame(step);
-                }
-            };
-            window.requestAnimationFrame(step);
-        }
-
-        // Function to update UI based on safety score
-        function updateUI(score, isSafe) {
-            const body = document.body;
-            const scoreDisplay = document.getElementById('score-display');
-            const scoreText = document.getElementById('score-text');
-            const safeButton = document.getElementById('safeButton');
-            const unsafeButton = document.getElementById('unsafeButton');
-            const resultSection = document.getElementById('resultSection');
-
-            resultSection.classList.add('visible');
-            scoreDisplay.classList.remove('d-none');
-
-            // Animate the score counter
-            animateValue(scoreText, 0, Math.abs(score), 2000);
-
-            if (isSafe) {
-                body.className = 'safe-theme';
-                scoreDisplay.className = 'score-circle safe-score';
-                safeButton.classList.remove('d-none');
-                unsafeButton.classList.add('d-none');
-            } else {
-                body.className = 'unsafe-theme';
-                scoreDisplay.className = 'score-circle unsafe-score';
-                safeButton.classList.add('d-none');
-                unsafeButton.classList.remove('d-none');
-            }
-        }
-
-        // Mock function to simulate URL analysis
-        function analyzeURL() {
-            const url = document.getElementById('urlInput').value;
-            if (!url) {
-                alert('Please enter a URL to analyze');
-                return;
-            }
-
-            // Simulate API call with random score for demonstration
-            // Replace this with actual API call in production
-            const score = Math.random();
-            const num = score * 100;
-
-            document.getElementById('urlDisplay').innerHTML = `
-                <a href="${url}" class="text-white text-decoration-none" target="_blank">
-                    ${url}
-                </a>
-            `;
-
-            if (score >= 0.50) {
-                // Safe case (50% or more safe)
-                document.getElementById("prediction").innerHTML = `Website is ${num.toFixed(1)}% safe to use`;
-                updateUI(num, true);
-            } else {
-                // Unsafe case (less than 50% safe)
-                const unsafeScore = 100 - num;
-                document.getElementById("prediction").innerHTML = `Website is ${unsafeScore.toFixed(1)}% unsafe to use`;
-                updateUI(unsafeScore, false);
-            }
-
-            // Show some mock categories
-            const categories = [
-                { name: 'Phishing Risk', confidence: (Math.random() * 100).toFixed(1) },
-                { name: 'Malware Risk', confidence: (Math.random() * 100).toFixed(1) },
-                { name: 'Content Safety', confidence: (Math.random() * 100).toFixed(1) }
-            ];
-
-            const categoriesList = document.getElementById('categories-list');
-            categoriesList.innerHTML = categories.map(category => `
-                <div class="category-item animate__animated animate__fadeInLeft">
-                    Name: ${category.name}, Confidence: ${category.confidence}%
-                </div>
-            `).join('');
-        }
-
-        // Allow form submission with Enter key
-        document.getElementById('urlInput').addEventListener('keypress', function(e) {
-            if (e.key === 'Enter') {
-                analyzeURL();
-            }
-        });
+        // Set theme based on result
+        {% if xx != -1 %}
+            document.body.className = {% if xx >= 0.50 %}'safe-theme'{% else %}'unsafe-theme'{% endif %};
+        {% endif %}
     </script>
 </body>
 </html>
