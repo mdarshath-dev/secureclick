@@ -4,75 +4,262 @@
     <meta charset="UTF-8">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Phishing URL Detection</title>
+    <title>SecureClick - URL Safety Checker</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
-    <!-- Animate.css for animations -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/particles.js/2.0.0/particles.min.js"></script>
     <style>
-        body {
-            min-height: 100vh;
-            background: linear-gradient(-45deg, #ee7752, #e73c7e, #23a6d5, #23d5ab);
-            background-size: 400% 400%;
-            animation: gradient 15s ease infinite;
+        :root {
+            --safe-gradient: linear-gradient(-45deg, #28a745, #20c997);
+            --unsafe-gradient: linear-gradient(-45deg, #dc3545, #c82333);
+            --neutral-gradient: linear-gradient(-45deg, #6a11cb, #2575fc);
         }
 
-        @keyframes gradient {
-            0% { background-position: 0% 50%; }
-            50% { background-position: 100% 50%; }
-            100% { background-position: 0% 50%; }
+        body {
+            min-height: 100vh;
+            background: var(--neutral-gradient);
+            background-size: 200% 200%;
+            animation: gradientBG 10s ease infinite;
+            transition: all 1s ease;
+            margin: 0;
+            padding: 0;
+            font-family: 'Poppins', sans-serif;
+        }
+
+        .header {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            z-index: 1000;
+            background: rgba(0, 0, 0, 0.2);
+            backdrop-filter: blur(10px);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            transition: all 0.5s ease;
+            padding: 1rem 0;
+        }
+
+        .logo {
+            font-size: 2.2rem;
+            font-weight: 700;
+            color: #ffffff;
+            text-decoration: none;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            transition: transform 0.3s ease;
+            letter-spacing: 0.5px;
+        }
+
+        .logo:hover {
+            transform: scale(1.05);
+            color: #ffffff;
+        }
+
+        .logo-icon {
+            font-size: 2.8rem;
+        }
+
+        #particles-js {
+            position: fixed;
+            width: 100%;
+            height: 100%;
+            top: 0;
+            left: 0;
+            z-index: 1;
+        }
+
+        .content-wrapper {
+            position: relative;
+            z-index: 2;
+            padding-top: 100px;
         }
 
         .glass-card {
             background: rgba(255, 255, 255, 0.15);
             backdrop-filter: blur(10px);
-            border-radius: 1rem;
+            border-radius: 1.5rem;
             border: 1px solid rgba(255, 255, 255, 0.2);
+            transition: all 0.5s ease;
+        }
+
+        .safe-theme {
+            background: var(--safe-gradient);
+        }
+
+        .safe-theme .glass-card {
+            box-shadow: 0 0 30px rgba(40, 167, 69, 0.3);
+        }
+
+        .unsafe-theme {
+            background: var(--unsafe-gradient);
+        }
+
+        .unsafe-theme .glass-card {
+            box-shadow: 0 0 30px rgba(220, 53, 69, 0.3);
+        }
+
+        .score-circle {
+            width: 180px;
+            height: 180px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 2.5rem;
+            font-weight: bold;
+            margin: 2rem auto;
+            transition: all 0.5s ease;
+            background: rgba(255, 255, 255, 0.2);
+            border: 4px solid rgba(255, 255, 255, 0.3);
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.2);
+        }
+
+        .result-section {
+            opacity: 0;
+            height: 0;
+            overflow: hidden;
+            transition: all 0.5s ease;
+        }
+
+        .result-section.visible {
+            opacity: 1;
+            height: auto;
+            overflow: visible;
+        }
+
+        .safe-score {
+            border-color: #28a745;
+            color: #ffffff;
+            background: rgba(40, 167, 69, 0.2);
+        }
+
+        .unsafe-score {
+            border-color: #dc3545;
+            color: #ffffff;
+            background: rgba(220, 53, 69, 0.2);
+        }
+
+        .category-item {
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 12px;
+            padding: 12px 18px;
+            margin-bottom: 12px;
+            backdrop-filter: blur(5px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            transition: transform 0.3s ease;
+        }
+
+        .category-item:hover {
+            transform: translateX(5px);
+        }
+
+        .url-input {
+            background: rgba(255, 255, 255, 0.9);
+            border: none;
+            transition: all 0.3s ease;
+        }
+
+        .url-input:focus {
+            background: #ffffff;
+            box-shadow: 0 0 0 0.25rem rgba(255, 255, 255, 0.25);
+        }
+
+        .analyze-btn {
+            background: #ffffff;
+            color: #6a11cb;
+            font-weight: 600;
+            transition: all 0.3s ease;
+        }
+
+        .analyze-btn:hover {
+            background: #f8f9fa;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+        }
+
+        @keyframes countUp {
+            from {
+                content: "0%";
+            }
+        }
+
+        .score-text {
+            position: relative;
+        }
+
+        .score-text::after {
+            content: attr(data-value);
+            animation: countUp 2s ease-out forwards;
+        }
+
+        @keyframes gradientBG {
+            0% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
         }
     </style>
 </head>
-<body class="d-flex align-items-center justify-content-center">
-    <div class="container py-5">
-        <div class="row justify-content-center">
-            <div class="col-md-8">
-                <div class="glass-card p-4 p-md-5 animate__animated animate__fadeIn">
-                    <h2 class="text-center text-white display-5 mb-4 fw-bold animate__animated animate__fadeInDown">
-                        Phishing URL Detection
-                    </h2>
+<body>
+    <!-- Header -->
+    <header class="header">
+        <div class="container">
+            <a href="/" class="logo">
+                <span class="logo-icon">🛡️</span>
+                <span>SecureClick</span>
+            </a>
+        </div>
+    </header>
 
-                    <form action="/" method="post" class="mb-4">
-                        <div class="input-group mb-3 animate__animated animate__fadeInUp animate__delay-1s">
-                            <input type="text" class="form-control form-control-lg shadow-sm"
-                                   name="url" id="url" placeholder="Enter URL" required>
-                            <button class="btn btn-primary btn-lg px-4" type="submit">
-                                Check URL
-                            </button>
+    <!-- Particles Background -->
+    <div id="particles-js"></div>
+
+    <!-- Main Content -->
+    <div class="content-wrapper d-flex align-items-center justify-content-center min-vh-100">
+        <div class="container py-5">
+            <div class="row justify-content-center">
+                <div class="col-md-8">
+                    <div class="glass-card p-4 p-md-5 animate__animated animate__fadeIn">
+                        <h2 class="text-center text-white display-5 mb-4 fw-bold animate__animated animate__fadeInDown">
+                            URL Safety Checker
+                        </h2>
+
+                        <div class="mb-4">
+                            <div class="input-group mb-3 animate__animated animate__fadeInUp animate__delay-1s">
+                                <input type="text"
+                                       class="form-control form-control-lg shadow-sm rounded-pill url-input"
+                                       id="urlInput"
+                                       placeholder="Enter URL to check"
+                                       required>
+                                <button class="btn analyze-btn btn-lg px-4 rounded-pill ms-2"
+                                        onclick="analyzeURL()">
+                                    Analyze URL
+                                </button>
+                            </div>
                         </div>
-                    </form>
 
-                    <div class="text-center">
-                        <h6 class="text-warning mb-3">
-                            <a href="{{ url }}" class="text-warning text-decoration-none" target="_blank">
-                                {{ url }}
-                            </a>
-                        </h6>
+                        <div id="resultSection" class="text-center result-section">
+                            <div id="score-display" class="score-circle d-none">
+                                <span id="score-text" class="score-text"></span>
+                            </div>
 
-                        <h3 id="prediction" class="text-white mb-4 animate__animated animate__fadeIn"></h3>
+                            <div id="urlDisplay" class="text-white mb-3"></div>
 
-                        <ul id="categories-list" class="list-unstyled text-start text-white ms-4">
-                            {% for category in listCategories %}
-                                <li class="mb-2 animate__animated animate__fadeInLeft animate__delay-1s">
-                                    Name: {{ category.name }}, Confidence: {{ category.confidence }}%
-                                </li>
-                            {% endfor %}
-                        </ul>
+                            <h3 id="prediction" class="result-text text-white mb-4 animate__animated animate__fadeIn"></h3>
 
-                        <div class="mt-4">
-                            <button id="button1" class="btn btn-success btn-lg px-4 me-2 d-none animate__animated animate__fadeInUp">
-                                Continue
-                            </button>
-                            <button id="button2" class="btn btn-danger btn-lg px-4 d-none animate__animated animate__fadeInUp">
-                                Still Want to Continue
-                            </button>
+                            <div id="categories-list" class="text-start text-white">
+                            </div>
+
+                            <div class="mt-4">
+                                <button id="safeButton" class="btn btn-success btn-lg px-4 me-2 d-none animate__animated animate__fadeInUp rounded-pill">
+                                    Continue Safely
+                                </button>
+                                <button id="unsafeButton" class="btn btn-danger btn-lg px-4 d-none animate__animated animate__fadeInUp rounded-pill">
+                                    Proceed with Caution
+                                </button>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -80,24 +267,138 @@
         </div>
     </div>
 
-    <script>
-        let x = '{{xx}}';
-        let num = x * 100;
-        if (0 <= x && x < 0.50) {
-            num = 100 - num;
-        }
-        let txtx = num.toString();
-        if (x <= 1 && x >= 0.50) {
-            var label = "Website is " + txtx + "% safe to use...";
-            document.getElementById("prediction").innerHTML = label;
-            document.getElementById("button1").classList.remove("d-none");
-        } else if (0 <= x && x < 0.50) {
-            var label = "Website is " + txtx + "% unsafe to use...";
-            document.getElementById("prediction").innerHTML = label;
-            document.getElementById("button2").classList.remove("d-none");
-        }
-    </script>
-
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        // Initialize particles.js
+        particlesJS('particles-js', {
+            particles: {
+                number: { value: 80 },
+                color: { value: '#ffffff' },
+                shape: { type: 'circle' },
+                opacity: { value: 0.5, random: false },
+                size: { value: 3, random: true },
+                line_linked: {
+                    enable: true,
+                    distance: 150,
+                    color: '#ffffff',
+                    opacity: 0.4,
+                    width: 1
+                },
+                move: {
+                    enable: true,
+                    speed: 3,
+                    direction: 'none',
+                    random: false,
+                    straight: false,
+                    out_mode: 'out',
+                    bounce: false,
+                }
+            },
+            interactivity: {
+                detect_on: 'canvas',
+                events: {
+                    onhover: { enable: true, mode: 'repulse' },
+                    onclick: { enable: true, mode: 'push' },
+                    resize: true
+                }
+            },
+            retina_detect: true
+        });
+
+        // Function to animate number counting
+        function animateValue(obj, start, end, duration) {
+            let startTimestamp = null;
+            const step = (timestamp) => {
+                if (!startTimestamp) startTimestamp = timestamp;
+                const progress = Math.min((timestamp - startTimestamp) / duration, 1);
+                const current = Math.floor(progress * (end - start) + start);
+                obj.textContent = current.toFixed(1) + '%';
+                if (progress < 1) {
+                    window.requestAnimationFrame(step);
+                }
+            };
+            window.requestAnimationFrame(step);
+        }
+
+        // Function to update UI based on safety score
+        function updateUI(score, isSafe) {
+            const body = document.body;
+            const scoreDisplay = document.getElementById('score-display');
+            const scoreText = document.getElementById('score-text');
+            const safeButton = document.getElementById('safeButton');
+            const unsafeButton = document.getElementById('unsafeButton');
+            const resultSection = document.getElementById('resultSection');
+
+            resultSection.classList.add('visible');
+            scoreDisplay.classList.remove('d-none');
+
+            // Animate the score counter
+            animateValue(scoreText, 0, Math.abs(score), 2000);
+
+            if (isSafe) {
+                body.className = 'safe-theme';
+                scoreDisplay.className = 'score-circle safe-score';
+                safeButton.classList.remove('d-none');
+                unsafeButton.classList.add('d-none');
+            } else {
+                body.className = 'unsafe-theme';
+                scoreDisplay.className = 'score-circle unsafe-score';
+                safeButton.classList.add('d-none');
+                unsafeButton.classList.remove('d-none');
+            }
+        }
+
+        // Mock function to simulate URL analysis
+        function analyzeURL() {
+            const url = document.getElementById('urlInput').value;
+            if (!url) {
+                alert('Please enter a URL to analyze');
+                return;
+            }
+
+            // Simulate API call with random score for demonstration
+            // Replace this with actual API call in production
+            const score = Math.random();
+            const num = score * 100;
+
+            document.getElementById('urlDisplay').innerHTML = `
+                <a href="${url}" class="text-white text-decoration-none" target="_blank">
+                    ${url}
+                </a>
+            `;
+
+            if (score >= 0.50) {
+                // Safe case (50% or more safe)
+                document.getElementById("prediction").innerHTML = `Website is ${num.toFixed(1)}% safe to use`;
+                updateUI(num, true);
+            } else {
+                // Unsafe case (less than 50% safe)
+                const unsafeScore = 100 - num;
+                document.getElementById("prediction").innerHTML = `Website is ${unsafeScore.toFixed(1)}% unsafe to use`;
+                updateUI(unsafeScore, false);
+            }
+
+            // Show some mock categories
+            const categories = [
+                { name: 'Phishing Risk', confidence: (Math.random() * 100).toFixed(1) },
+                { name: 'Malware Risk', confidence: (Math.random() * 100).toFixed(1) },
+                { name: 'Content Safety', confidence: (Math.random() * 100).toFixed(1) }
+            ];
+
+            const categoriesList = document.getElementById('categories-list');
+            categoriesList.innerHTML = categories.map(category => `
+                <div class="category-item animate__animated animate__fadeInLeft">
+                    Name: ${category.name}, Confidence: ${category.confidence}%
+                </div>
+            `).join('');
+        }
+
+        // Allow form submission with Enter key
+        document.getElementById('urlInput').addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                analyzeURL();
+            }
+        });
+    </script>
 </body>
 </html>
